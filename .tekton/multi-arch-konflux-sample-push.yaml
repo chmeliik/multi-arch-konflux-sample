@@ -145,6 +145,12 @@ spec:
         value: $(params.git-url)
       - name: revision
         value: $(params.revision)
+      # tags are crucial for determining versions
+      - name: fetchTags
+        value: 'true'
+      # tags don't work with a shallow clone, do a full clone
+      - name: depth
+        value: '0'
       - name: ociStorage
         value: $(params.output-image).git
       - name: ociArtifactExpiresAfter
@@ -168,6 +174,14 @@ spec:
       workspaces:
       - name: basic-auth
         workspace: git-auth
+
+    - name: get-buildah-args
+      taskRef:
+        name: get-buildah-args
+      params:
+        - name: SOURCE_ARTIFACT
+          value: $(tasks.clone-repository.results.SOURCE_ARTIFACT)
+
     - name: prefetch-dependencies
       params:
       - name: input
@@ -218,6 +232,10 @@ spec:
       - name: BUILD_ARGS
         value:
         - $(params.build-args[*])
+        - $(tasks.get-buildah-args.results.args[*])
+      - name: LABELS
+        value:
+        - $(tasks.get-buildah-args.results.labels[*])
       - name: BUILD_ARGS_FILE
         value: $(params.build-args-file)
       - name: SOURCE_ARTIFACT
