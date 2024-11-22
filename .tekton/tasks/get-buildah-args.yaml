@@ -1,0 +1,46 @@
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: get-buildah-args
+spec:
+  params:
+    - name: SOURCE_ARTIFACT
+      type: string
+      description: >-
+        The Trusted Artifact URI pointing to the artifact with the application source code.
+  results:
+    - name: args
+      type: array
+      description: ARG values for the container build
+    - name: labels
+      type: array
+      description: LABEL values for the container build
+  steps:
+    - name: use-trusted-artifact
+      # pin the image to a digest, Konflux will automatically send you updates
+      image: quay.io/redhat-appstudio/build-trusted-artifacts:latest@sha256:a83c92fc0a1e2c785937c6612dc8c8237818535543f00ecaf6b3b77a35f76259
+      args:
+        - use
+        - $(params.SOURCE_ARTIFACT)=/tekton/home/source
+
+    - name: set-results
+      # use any image you want, but prefer Red Hat images for security
+      image: registry.access.redhat.com/ubi9/ubi-minimal:9.5@sha256:d85040b6e3ed3628a89683f51a38c709185efc3fb552db2ad1b9180f2a6c38be
+      workingDir: /tekton/home/source
+      env:
+        - name: ARGS_RESULT
+          value: $(results.args.path)
+        - name: LABELS_RESULT
+          value: $(results.labels.path)
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+
+        microdnf -y install git-core
+
+        version=$(git describe --tags --abbrev=0)
+        exact_version=$(git describe --tags)
+
+        printf '["version=%s"]' "$version" > "$LABELS_RESULT"
+        printf '["VERSION=%s", "EXACT_VERSION=%s"]' "$version" "$exact_version" > "$ARGS_RESULT"
