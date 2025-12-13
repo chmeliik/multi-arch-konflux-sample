@@ -26,7 +26,7 @@ spec:
 
     - name: set-results
       # use any image you want, but prefer Red Hat images for security
-      image: registry.access.redhat.com/ubi9/ubi-minimal:9.5@sha256:d85040b6e3ed3628a89683f51a38c709185efc3fb552db2ad1b9180f2a6c38be
+      image: registry.access.redhat.com/ubi9/ubi-minimal:9.7-1764794109@sha256:6fc28bcb6776e387d7a35a2056d9d2b985dc4e26031e98a2bd35a7137cd6fd71
       workingDir: /tekton/home/source
       env:
         - name: ARGS_RESULT
